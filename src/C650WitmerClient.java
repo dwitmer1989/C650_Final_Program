@@ -26,14 +26,6 @@ public class C650WitmerClient{
 
         //now that we have made the connection with the server, establish a UDP connection and receive the packets
         byte[][] contents = getUDPFile(p); 
-        if(contents != null){
-            //we can send the ack and write to the file
-            sendAck(p);
-        }
-        else{
-            System.out.println("Oh NO!");
-        }
-
 
     }
 
@@ -50,11 +42,11 @@ public class C650WitmerClient{
     private static byte[][] getUDPFile(int p) throws SocketException, IOException{
         byte[] receive = new byte[100]; 
         DatagramSocket ds = new DatagramSocket(p); 
-        DatagramPacket dp = new DatagramPacket(receive, receive.length); 
-        
+        DatagramPacket dp = new DatagramPacket(receive, receive.length);  
         //get the first packet
         ds.receive(dp);
-
+        //get the port to send the ack back on
+        int packetPort = dp.getPort(); 
         //number of packets that will be received
         int numPackets = Character.getNumericValue((char)receive[1]);
         
@@ -72,8 +64,8 @@ public class C650WitmerClient{
 
         //fill the rest of the 2d array with subsequent packets
         for(int j = 1 ; j < numPackets; j++){
-            ds.receive(dp); 
-            currentPacket = Character.getNumericValue((char)receive[0]); 
+            ds.receive(dp);
+            currentPacket = Character.getNumericValue((char)receive[0]);  
             hasCompleteFile[currentPacket] = true; 
             for(int i = 0; i < receive.length-2; i++){
                 contents[currentPacket][i] = receive[i+2]; 
@@ -86,10 +78,11 @@ public class C650WitmerClient{
                 return null; 
         }
         ds.close();
+        sendAck(packetPort);
         return contents; 
     }
 
-    private static void sendAck(int p){
+    private static void sendAck(int p) throws SocketException, IOException{
         DatagramSocket ds = new DatagramSocket();
         String msg = "ACK"; 
         byte[] ackMsg = msg.getBytes(); 

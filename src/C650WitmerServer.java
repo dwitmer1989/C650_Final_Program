@@ -58,12 +58,19 @@ public class C650WitmerServer{
                System.out.println("\nHello Received\nPort: " + p +'\n');
                s.close(); 
 
-               //now that we have the port, we will establish the UPD connection and send the file
-               sendFile(file, m, p); 
+               //now that we have the port, we will establish the UPD connection and send the file 
+               DatagramSocket ds = new DatagramSocket();  
+               sendFile(ds,file, m, p); 
+
+               //await the ack
+               
+               if(awaitAck(ds, p) == true){
+                   System.out.println("OK");
+               } 
            }
+                  
        }
 
-       //wait for the ack
     }
 
     //private methods
@@ -77,10 +84,8 @@ public class C650WitmerServer{
         return bytesArray; 
     }
 
-    private static void sendFile(byte[] file, int m, int p) throws SocketException, UnknownHostException, IOException{
-        int numPackets = (int) Math.round(Math.ceil(file.length/new Double(m))); 
-        
-        DatagramSocket ds = new DatagramSocket(); 
+    private static void sendFile(DatagramSocket ds, byte[] file, int m, int p) throws SocketException, UnknownHostException, IOException{
+        int numPackets = (int) Math.round(Math.ceil(file.length/new Double(m)));  
         //form the packet
         int byteNumber = 0; 
         int packetNumber=0; 
@@ -96,9 +101,23 @@ public class C650WitmerServer{
             //send the packet
             DatagramPacket dp = new DatagramPacket(contents, contents.length, InetAddress.getLocalHost(), p);
             ds.send(dp);
-
-            if(byteNumber >= file.length)
-            break;
+            if(byteNumber >= file.length){
+                break;
+            }
         }
+    }
+
+    private static boolean awaitAck(DatagramSocket ds, int p) throws IOException, SocketException{ 
+        byte[] receive = new byte[1024]; 
+        DatagramPacket dp = new DatagramPacket(receive, receive.length); 
+        ds.receive(dp);
+        String msg = ""; 
+        for(byte b : receive){
+            msg = msg + (char)b; 
+        }
+        ds.close();
+        if(msg.contains("ACK"))
+            return true; 
+        return false; 
     }
 }
