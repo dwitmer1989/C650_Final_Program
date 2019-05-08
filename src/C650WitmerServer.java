@@ -11,12 +11,15 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
+import java.sql.Time;
 import java.util.Scanner;
 import javax.activation.FileDataSource;
 import java.io.FileInputStream;
 import java.lang.Math;
+import java.util.Date; 
  
 
 public class C650WitmerServer{
@@ -62,11 +65,23 @@ public class C650WitmerServer{
                DatagramSocket ds = new DatagramSocket();  
                sendFile(ds,file, m, p); 
 
-               //await the ack
-               
-               if(awaitAck(ds, p) == true){
-                   System.out.println("OK");
-               } 
+               //await the ack and send again if no ack comes
+               int timeout = t; 
+               ds.setSoTimeout(timeout);
+               while(true){
+                    try{
+                        if(awaitAck(ds, p, t) == true){
+                            System.out.println("OK");
+                            break;
+                        } 
+                    }catch(SocketTimeoutException e){
+                        ds.setSoTimeout(timeout * 2);
+                        System.out.println(p);
+                        System.out.println("Resending");
+                        sendFile(ds,file, m, p); 
+                    }
+               }
+
            }
                   
        }
@@ -107,7 +122,7 @@ public class C650WitmerServer{
         }
     }
 
-    private static boolean awaitAck(DatagramSocket ds, int p) throws IOException, SocketException{ 
+    private static boolean awaitAck(DatagramSocket ds, int p, int timeout) throws IOException, SocketException{  
         byte[] receive = new byte[1024]; 
         DatagramPacket dp = new DatagramPacket(receive, receive.length); 
         ds.receive(dp);
