@@ -94,7 +94,7 @@ public class C650WitmerServer{
     //private methods
     private static byte[] getFileArray() throws IOException {
         //read file into byte array
-        File file = new File("/Users/deronwitmer/c650projs19/stestfile.txt");
+        File file = new File("c:/c650projs19/stestfile");
         byte[] bytesArray = new byte[(int) file.length()]; 
         FileInputStream fis = new FileInputStream(file);
         fis.read(bytesArray);
