@@ -72,6 +72,9 @@ public class C650WitmerServer{
                     try{
                         if(awaitAck(ds, p, t) == true){
                             System.out.println("OK");
+                            //send okay message back to client
+                            byte[] okayMessage = "OK".getBytes(); 
+                            sendFile(ds, okayMessage, m, p);
                             break;
                         } 
                     }catch(SocketTimeoutException e){
@@ -130,7 +133,6 @@ public class C650WitmerServer{
         for(byte b : receive){
             msg = msg + (char)b; 
         }
-        ds.close();
         if(msg.contains("ACK"))
             return true; 
         return false; 

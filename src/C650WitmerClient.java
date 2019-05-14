@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.DatagramPacket;
@@ -17,6 +19,7 @@ public class C650WitmerClient{
         pr.println("Hello");
         pr.flush(); 
         int p = getPort(); 
+        DatagramSocket ds = new DatagramSocket(p);
         pr.println(p); 
         pr.flush(); 
         
@@ -25,8 +28,25 @@ public class C650WitmerClient{
         pr.close();
 
         //now that we have made the connection with the server, establish a UDP connection and receive the packets
-        byte[][] contents = getUDPFile(p); 
-
+        byte[][] contents = null;  
+        
+        //if getUDPFile returns null, wait again. getUDPFile returns null if none or only some of the packets were received.
+        while(contents == null){
+            contents = getUDPFile(ds, p);
+        }
+        //write the contents of the data sent to the file
+        String message = getStringFromMessage(contents); 
+        writeFile("/Users/deronwitmer/c650projs19/newFile.txt", message); 
+        
+        //if get message "OK", close the UPD socket. 
+        contents = getUDPFile(ds, p); 
+        message = getStringFromMessage(contents); 
+        if(message.contains("OK")){
+            System.out.println("Done");
+            System.out.println(p);
+            ds.close();
+        }
+            
     }
 
     //private methods...
@@ -39,9 +59,8 @@ public class C650WitmerClient{
             return getPort();   
     }
 
-    private static byte[][] getUDPFile(int p) throws SocketException, IOException{
-        byte[] receive = new byte[100]; 
-        DatagramSocket ds = new DatagramSocket(p); 
+    private static byte[][] getUDPFile(DatagramSocket ds, int p) throws SocketException, IOException{
+        byte[] receive = new byte[100];  
         DatagramPacket dp = new DatagramPacket(receive, receive.length);  
         //get the first packet
         ds.receive(dp);
@@ -77,21 +96,34 @@ public class C650WitmerClient{
             if(!b)
                 return null; 
         }
-        ds.close();
-        sendAck(packetPort);
+        sendAck(ds, packetPort);
         return contents; 
     }
 
-    private static void sendAck(int p) throws SocketException, IOException{
-        DatagramSocket ds = new DatagramSocket();
+    private static void sendAck(DatagramSocket ds, int p) throws SocketException, IOException{
         String msg = "ACK"; 
         byte[] ackMsg = msg.getBytes(); 
         DatagramPacket dp = new DatagramPacket(ackMsg, ackMsg.length, InetAddress.getLocalHost(), p); 
         ds.send(dp);
-        ds.close();
         System.out.println(p);
+        System.out.println("Ack Sent");
     }
 
+    private static void writeFile(String location, String message) throws FileNotFoundException{
+        PrintWriter out = new PrintWriter(location); 
+        out.println(message); 
+        out.close();
+    }
+
+    private static String getStringFromMessage(byte[][] contents){
+        String message = ""; 
+        for(byte[] B: contents){
+            for (byte b: B){
+                message += ((char)b);
+            }
+        }
+        return message; 
+    }
 
 }
 
