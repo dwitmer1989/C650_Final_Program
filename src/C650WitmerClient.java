@@ -36,7 +36,9 @@ public class C650WitmerClient{
         }
         //write the contents of the data sent to the file
         String message = getStringFromMessage(contents); 
-        writeFile("/Users/deronwitmer/c650projs19/newFile.txt", message); 
+        
+        //this was written and tested on a mac. line 41 was edited just before submission to work with windows
+        writeFile("c:/c650projs19/ctestfile", message); 
         
         //if get message "OK", close the UPD socket. 
         contents = getUDPFile(ds, p); 

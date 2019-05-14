@@ -94,6 +94,7 @@ public class C650WitmerServer{
     //private methods
     private static byte[] getFileArray() throws IOException {
         //read file into byte array
+        //this was written and tested on a mac. Line 98 was edited without testing just before submission
         File file = new File("c:/c650projs19/stestfile");
         byte[] bytesArray = new byte[(int) file.length()]; 
         FileInputStream fis = new FileInputStream(file);
